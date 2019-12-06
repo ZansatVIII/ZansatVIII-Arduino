@@ -9,9 +9,9 @@ This repository stores code that will be written onto the arduino pro mini on bo
 - **A Servo System** For Directing the fall of the probe by adjusting the parachute
 
 ### Libraries used:
--Adafruit libraries for the BME and HMC sensors
--Tinygps
--Other basic Arduino libraries (SPI,Wire,SoftwareSerial )
+- Adafruit libraries for the BME and HMC sensors
+- Tinygps
+- Other basic Arduino libraries (SPI,Wire,SoftwareSerial )
 
 
 ### [Visit our site](zansatviii.nl) for more about our project
