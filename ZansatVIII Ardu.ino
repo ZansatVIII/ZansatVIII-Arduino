@@ -1,19 +1,3 @@
-/***************************************************************************
-  This is a library for the BMP280 humidity, temperature & pressure sensor
-
-  Designed specifically to work with the Adafruit BMEP280 Breakout 
-  ----> http://www.adafruit.com/products/2651
-
-  These sensors use I2C or SPI to communicate, 2 or 4 pins are required 
-  to interface.
-
-  Adafruit invests time and resources providing this open source code,
-  please support Adafruit andopen-source hardware by purchasing products
-  from Adafruit!
-
-  Written by Limor Fried & Kevin Townsend for Adafruit Industries.  
-  BSD license, all text above must be included in any redistribution
- ***************************************************************************/
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <SPI.h>
@@ -22,32 +6,34 @@
 #include <TinyGPS.h>
 #include <Adafruit_HMC5883_U.h>
 SoftwareSerial GPS(7,8); //GPS
-TinyGPS gps;
 char outBuffer[40];
-int initp = 1013.5;
-long lon , lat;
+float drive, heading, const declination = (1.0/180) * PI , const initp = 1013.5 ; //initial pressure, needs adjusting every time starting
+long lon , lat; //longtitude , lattitude
 unsigned long fix_age;
-float drive = 0;
 /*
 #define BMP_SCK 13
 #define BMP_MISO 12
 #define BMP_MOSI 9
 #define BMP_CS 8
 */
+TinyGPS gps;
 Adafruit_BME280 bme; // I2C
 Adafruit_HMC5883_Unified mag;
 
-//Stuurt informatie en stuurt motoren iedere seconde 
+//Sends information every interrupt
 void Tick(){
   /*
+	 //Alternative way: Use if the one below does not work
    String t = String(bme.readTemperature()); 
    String p = String(bme.readPressure()); 
    String h = String(bme.readAltitude(1013.25)); 
-   String m = String(bme.readMoisture());
+   String m = String(bme.readHumidity());
    Serial.println(t+";"+p+";"+h+";"+m);
    */
-  sprintf(outBuffer,"%f ; %f ; %f ; %f",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()));
+  sprintf(outBuffer,"%f ; %f ; %f ; %f ; %Lf",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()));
   Serial.println(String(outBuffer));
+	
+	
 }
 
 void setup() {
@@ -55,26 +41,38 @@ void setup() {
   Serial.begin(9600);
   Serial.println(F("BMP280 test"));
   pinMode(2,INPUT);
+	//Attaches interrupt to the pin recieving the pps signal
   attachInterrupt(digitalPinToInterrupt(2), Tick , RISING);
   if (!bme.begin()) {  
-    Serial.println(F("NO BME"));
+    Serial.println(F("NO BME"))
   }
   if(!mag.begin()){
-    /* There was a problem detecting the HMC5883 ... check your connections */
     Serial.println("NO HMC");
-    while(1);
   }
 
 }
 
 void loop() {
+	//Gets Longtitude And Lattitude from the gps
   while (GPS.available())
   {
     if (gps.encode(GPS.read()))
     {
-      gps.get_position(&lat, &lon, &fix_age);
+			gps.get_position(&lat, &lon, &fix_age);
+			
     }
   }
-  sensors_event_t event;
+	//Calculates the direction we are heading
+	sensors_event_t event;
   mag.getEvent(&event); 
+	heading = atan2(event.magnetic.y, event.magnetic.x) + declination
+	if(heading < 0){ //Check if the value is negative
+    heading += 2*PI;
+	} 
+	else if(heading > 2*PI){ // Check for wrap due to addition of declination.
+	  heading -= 2*PI;
+	}
+    
+	
+  
 }
