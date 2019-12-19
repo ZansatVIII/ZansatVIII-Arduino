@@ -5,7 +5,7 @@
 #include <Adafruit_BME280.h>
 #include <TinyGPS.h>
 #include <Adafruit_HMC5883_U.h>
-SoftwareSerial GPS(7,8); //GPS
+SoftwareSerial GPS(7,8); //GPS 
 char outBuffer[40];
 float drive, heading, Theading;
 const float degtorad = 71 / 4068 , declination = 1.0 * degtorad , initp = 1013.5 ; //initial pressure and declination, needs adjusting every time starting
@@ -31,7 +31,8 @@ void Tick(){
    String h = String(bme.readHumidity());
    Serial.println(t+";"+p+";"+h+";"+h);
    */
-  sprintf(outBuffer,"%s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()));
+  //Formats all data onto a buffer that is printed in string form in the next line
+  sprintf(outBuffer,"%s ; %s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()),String(drive));
   Serial.println(String(outBuffer));
 	
 	
@@ -48,7 +49,7 @@ void setup() {
     Serial.println(F("NO BME"));
   }
   if(!mag.begin()){
-    Serial.println("NO HMC");
+    Serial.println(F("NO HMC"));
   }
 
 }
@@ -63,15 +64,16 @@ void loop() {
 			
     }
   }
-	//Calculates the direction we are heading
+  //Makes a sensor event and reads all sensor data to it
   sensors_event_t event;
   mag.getEvent(&event); 
-  heading = atan2(event.magnetic.y, event.magnetic.x) + declination;
+  //Reads calculates the direction we are heading
+  heading = (atan2(event.magnetic.y, event.magnetic.x) + declination)/degtorad;
   if(heading < 0){ //Check if the value is negative
-    heading += 2*PI;
+    heading += 360;
   } 
-  else if(heading > 2*PI){ // Check for wrap due to addition of declination.
-    heading -= 2*PI;
+  else if(heading > 360){ // Check for wrap due to addition of declination.
+    heading -= 360;
   }
   //Calculate Heading to target  N = 0 E = 90 S = 180 W = 270
   course = course_to(lat,lon,Tlat,Tlon);
@@ -79,6 +81,18 @@ void loop() {
   Step one is to calculate the change in angle needed to make heading equal to the course.
   Step two is to calculate the (propotional) drive by dividing the step one number with the change of angle in degrees that we want the drive to be maximum and clamp the result between the maximal and the minimal drive value
   */
-  drive = constrain(((course - heading)/45), -1 ,1);
+  drive = (course - heading) / 45
+  drive = constrain(drive, -1 ,1);
   
+	if(Serial.available() > 1){
+    sIN = Serial.readString();
+		switch(sIN.charAt(0)){
+				case char(v){
+				  Tlat = float(sIN.subString(1, sIN.indexOf(';')));
+					Tlon = float(sIN.subString(sIN.indexOf(';'), sIN.length()));
+	
+				}
+		}
+	
+   
 }
