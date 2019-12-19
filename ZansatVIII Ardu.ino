@@ -7,9 +7,9 @@
 #include <Adafruit_HMC5883_U.h>
 SoftwareSerial GPS(7,8); //GPS
 char outBuffer[40];
-float drive, heading;
-const float declination = (1.0/180) * PI , initp = 1013.5 ; //initial pressure, needs adjusting every time starting
-long lon , lat; //longtitude , lattitude
+float drive, heading, Theading;
+const float degtorad = 71 / 4068 , declination = 1.0 * degtorad , initp = 1013.5 ; //initial pressure and declination, needs adjusting every time starting
+long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 unsigned long fix_age;
 /*
 #define BMP_SCK 13
@@ -28,10 +28,10 @@ void Tick(){
    String t = String(bme.readTemperature()); 
    String p = String(bme.readPressure()); 
    String h = String(bme.readAltitude(1013.25)); 
-   String m = String(bme.readHumidity());
-   Serial.println(t+";"+p+";"+h+";"+m);
+   String h = String(bme.readHumidity());
+   Serial.println(t+";"+p+";"+h+";"+h);
    */
-  sprintf(outBuffer,"%f ; %f ; %f ; %f ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()));
+  sprintf(outBuffer,"%s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()));
   Serial.println(String(outBuffer));
 	
 	
@@ -43,7 +43,7 @@ void setup() {
   Serial.println(F("BMP280 test"));
   pinMode(2,INPUT);
 	//Attaches interrupt to the pin recieving the pps signal
-  attachInterrupt(digitalPinToInterrupt(2), Tick , RISING);
+  attachInterrupt(digitalPinToInterrupt(3), Tick , RISING);
   if (!bme.begin()) {  
     Serial.println(F("NO BME"));
   }
@@ -73,4 +73,12 @@ void loop() {
   else if(heading > 2*PI){ // Check for wrap due to addition of declination.
     heading -= 2*PI;
   }
+  //Calculate Heading to target  N = 0 E = 90 S = 180 W = 270
+  course = course_to(lat,lon,Tlat,Tlon);
+  /*Calculating the drive variable in two steps: 
+  Step one is to calculate the change in angle needed to make heading equal to the course.
+  Step two is to calculate the (propotional) drive by dividing the step one number with the change of angle in degrees that we want the drive to be maximum and clamp the result between the maximal and the minimal drive value
+  */
+  drive = constrain(((course - heading)/45), -1 ,1);
+  
 }
