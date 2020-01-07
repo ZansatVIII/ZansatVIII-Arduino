@@ -14,4 +14,4 @@ This repository stores code that will be written onto the arduino pro mini on bo
 - Other basic Arduino libraries (SPI,Wire,SoftwareSerial )
 
 
-### [Visit our site](zansatviii.nl) for more about our project
+### [Visit our site](zansat-viii.nl) for more about our project
