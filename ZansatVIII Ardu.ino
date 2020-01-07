@@ -3,37 +3,37 @@
 #include <SPI.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-#include <TinyGPS.h>
+#include <TinyGPS.h>  
 #include <Adafruit_HMC5883_U.h>
-SoftwareSerial GPS(7,8); //GPS 
-char outBuffer[40];
-float drive, heading, Theading;
-const float degtorad = 71 / 4068 , declination = 1.0 * degtorad , initp = 1013.5 ; //initial pressure and declination, needs adjusting every time starting
+
+//char Buffer[40]; 
+String out; 
+float initp = 1013.25 , declination = 1.0 * degtorad /*default*/,drive, heading, course;
+const float degtorad = 71 / 4068 ,  ; //initial pressure and declination, needs adjusting every time starting
 long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 unsigned long fix_age;
-/*
-#define BMP_SCK 13
-#define BMP_MISO 12
-#define BMP_MOSI 9
-#define BMP_CS 8
-*/
+bool servoEN = False; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
+
+#define GPSIN  8
+#define GPSOUT 7
+#define GPSPPS 3
+
+SoftwareSerial GPS(GPSIN,GPSOUT); //GPS 
 TinyGPS gps;
 Adafruit_BME280 bme; // I2C
 Adafruit_HMC5883_Unified mag;
 
 //Sends information every interrupt
 void Tick(){
-  /*
-	 //Alternative way: Use if the one below does not work
-   String t = String(bme.readTemperature()); 
-   String p = String(bme.readPressure()); 
-   String h = String(bme.readAltitude(1013.25)); 
-   String h = String(bme.readHumidity());
-   Serial.println(t+";"+p+";"+h+";"+h);
-   */
+   out = out + String(bme.readTemperature()); 
+   out = out + String(bme.readPressure()); 
+   out = out + String(bme.readAltitude(initp)); 
+   out = out + String(bme.readHumidity());
+   Serial.println(out);
+   out = ''
   //Formats all data onto a buffer that is printed in string form in the next line
-  sprintf(outBuffer,"%s ; %s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()),String(drive));
-  Serial.println(String(outBuffer));
+  //sprintf(outBuffer,"%s ; %s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()),String(drive));
+  //Serial.println(String(outBuffer));
 	
 	
 }
@@ -41,15 +41,16 @@ void Tick(){
 void setup() {
   GPS.begin(9600);
   Serial.begin(9600);
-  Serial.println(F("BMP280 test"));
   pinMode(2,INPUT);
 	//Attaches interrupt to the pin recieving the pps signal
-  attachInterrupt(digitalPinToInterrupt(3), Tick , RISING);
+  attachInterrupt(digitalPinToInterrupt(GPSPPS), Tick , RISING);
   if (!bme.begin()) {  
     Serial.println(F("NO BME"));
+    while(1);
   }
   if(!mag.begin()){
     Serial.println(F("NO HMC"));
+    while(1);
   }
 
 }
@@ -67,7 +68,7 @@ void loop() {
   //Makes a sensor event and reads all sensor data to it
   sensors_event_t event;
   mag.getEvent(&event); 
-  //Reads calculates the direction we are heading
+  //Reads calculates the direction we are heading. TODO: Check Sensor orientation and change formula accordingly 
   heading = (atan2(event.magnetic.y, event.magnetic.x) + declination)/degtorad;
   if(heading < 0){ //Check if the value is negative
     heading += 360;
@@ -83,15 +84,28 @@ void loop() {
   */
   drive = (course - heading) / 45
   drive = constrain(drive, -1 ,1);
-  
+  //Recieving commands from the ground
 	if(Serial.available() > 1){
     sIN = Serial.readString();
-		switch(sIN.charAt(0)){
-				case char(v){
-				  Tlat = float(sIN.subString(1, sIN.indexOf(';')));
-					Tlon = float(sIN.subString(sIN.indexOf(';'), sIN.length()));
-	
-				}
+		switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1 
+      case char('v'): //Setting Victim Coordinates 
+				  Tlat = sIN.subString(2, sIN.indexOf(' ')).toFloat();
+					Tlon = sIN.subString(sIN.indexOf(' ')).toFloat();
+          break;
+      case char('i'): //Setting initial pressure and declination
+          initp = sIN.subString(2, sIN.indexOf(' ')).toFloat();
+					declination = sIN.subString(sIN.indexOf(' ')).toFloat() * degtorad;
+          break;
+      case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'ON' , off if anything else, Argument of max 2 chars) 
+          if (char-1){
+            servoEN = sIN.substring(2,4) == 'ON'
+          } 
+          else {
+            servoEN = !servoEN;
+          }
+        
+          
+          
 		}
 	
    
