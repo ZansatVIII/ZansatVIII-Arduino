@@ -78,6 +78,8 @@ void setup() {
   }
   SL.attach(SRVL);
   SR.attach(SRVR);
+  //Attaches interrupt to the pin recieving the pps signal
+  attachInterrupt(digitalPinToInterrupt(GPSPPS), Tick , RISING);
 }
 
 void loop() {
