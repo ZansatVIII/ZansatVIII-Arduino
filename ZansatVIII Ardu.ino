@@ -1,3 +1,13 @@
+///////////////////////////////////////////////////////////Libs\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
+#include <SoftwareSerial.h>
+#include <Wire.h>
+#include <SPI.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_BME280.h>
+#include <TinyGPS.h>  
+#include <Adafruit_HMC5883_U.h>
+#include <SD.h>
 #include <Servo.h>
 ///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
