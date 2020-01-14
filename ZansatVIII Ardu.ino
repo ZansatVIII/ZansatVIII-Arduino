@@ -122,7 +122,7 @@ void loop() {
   Step two is to calculate the (propotional) drive by dividing the step one number with the change of angle in degrees that we want the drive to be maximum and clamp the result between the maximal and the minimal drive value
   0-90 is left 90-180 is right
   */
-  drive = (course - heading) / 0,25;
+  drive = (course - heading) / 0.25;
   //drive = constrain(drive, -180 ,180);
   //-180 - Fully Winched In, turning ; 0 - Fully Winched Out, no turning.  
   SL.write( -(constrain(drive, -180 , 0)));
@@ -144,7 +144,7 @@ switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1
       case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'ON' , off if anything else, Argument of max 2 chars) 
           if (sIN.length() > 1)
           {
-            servoEN = sIN.substring(2,4) == 'ON';
+            servoEN = sIN.substring(2,4) == "ON";
           } 
           else 
           {
