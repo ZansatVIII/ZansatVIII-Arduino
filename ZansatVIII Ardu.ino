@@ -1,3 +1,20 @@
+//////////////////////////////////////////////////////////Info\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/*                                       Zansat VIII cansat microcontroller code
+
+                              Github Source: https://github.com/ZansatVIII/ZansatVIII-Arduino/
+                          Author: Jakub Stachurski, Lead programmer @ the Zansat VIII Cansat Team 
+                      
+                        !! Disclaimer: This code is designed for a specific board and components, 
+                        different hardware configurations may not result in optimal performance. !!
+                       
+              This version is not fully tested nor optimized, take this into account when using the code in any way: 
+                                        The only test made is compiling this code 
+                                           
+                                          The code is licensed under GGPL v3.0:
+                               (TL;DR : Plagiarizing this is fine as long as you admit to it)
+                                    
+                                        ... An output parsing tool coming soon ...
+*/
 ///////////////////////////////////////////////////////////Libs\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 #include <SoftwareSerial.h>
