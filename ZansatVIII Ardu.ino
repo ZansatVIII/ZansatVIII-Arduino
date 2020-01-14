@@ -1,5 +1,6 @@
+/*
 //////////////////////////////////////////////////////////Info\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-/*                                       Zansat VIII cansat microcontroller code
+                                       Zansat VIII cansat microcontroller code
 
                               Github Source: https://github.com/ZansatVIII/ZansatVIII-Arduino/
                           Author: Jakub Stachurski, Lead programmer @ the Zansat VIII Cansat Team 
@@ -14,9 +15,9 @@
                                (TL;DR : Plagiarizing this is fine as long as you admit to it)
                                     
                                         ... An output parsing tool coming soon ...
-*/
-///////////////////////////////////////////////////////////Libs\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
+///////////////////////////////////////////////////////////Libs\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+*/
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <SPI.h>
