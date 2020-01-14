@@ -6,7 +6,7 @@ const float degtorad = 71 / 4068; //initial pressure and declination, needs adju
 float initp = 1013.25 , declination = 1.0 * degtorad /*default*/,drive, heading, course;
 long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 unsigned long fix_age;
-bool servoEN = false, wr = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
+bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 File Log ;
 Servo SL , SR;
 
@@ -24,26 +24,6 @@ Adafruit_HMC5883_Unified mag;
 ///////////////////////////////////////////////////Sends all data every interrupt/////////////////////////////
 //Adds the float as string onto the out string 
 
-void Append(float f){
-  out = out + String(f) + ';' ;
-}
-
-void Tick(){
-   Append(bme.readTemperature()); 
-   Append(bme.readPressure()); 
-   Append(bme.readAltitude(initp)); 
-   Append(bme.readHumidity());
-   Append(course);
-   Append(drive);
-   Serial.print(out);
-   wr = true;
-   out = '\n';
-  //Formats all data onto a buffer that is printed in string form in the next line
-  //sprintf(outBuffer,"%s ; %s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()),String(drive));
-  //Serial.println(String(outBuffer));
-}
-////////////////////////////////////////////Hardware and Library initialization\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
-
 void INIT(){ 
   if(SD.begin(SDSS)){
     File Log = SD.open("log.txt", FILE_WRITE);
@@ -57,6 +37,29 @@ void INIT(){
     SR.attach(SRVR);
   }
 }
+
+void Append(float f){
+  out = out + String(f) + ';' ;
+}
+
+void Tick(){
+   Append(bme.readTemperature()); 
+   Append(bme.readPressure()); 
+   Append(bme.readAltitude(initp)); 
+   Append(bme.readHumidity());
+   Append(course);
+   Append(drive);
+   Serial.print(out);
+   if(Log) {
+    Log.print(out);
+  }
+   out = '\n';
+  //Formats all data onto a buffer that is printed in string form in the next line
+  //sprintf(outBuffer,"%s ; %s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()),String(drive));
+  //Serial.println(String(outBuffer));
+}
+////////////////////////////////////////////Hardware and Library initialization\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+
 void setup() {
   GPS.begin(9600);
   Serial.begin(9600);
@@ -81,11 +84,6 @@ void setup() {
 
 void loop() {
   ///////////////////////////BEGIN OF LOOP | Orientation data gathering \\\\\\\\\\\\\\\\\\\\\\\
-  
-  if(Log && wr) {
-    Log.print(out);
-    wr = false;
-  }
   //Gets Longtitude And Lattitude from the gps
   while (GPS.available())
   {
