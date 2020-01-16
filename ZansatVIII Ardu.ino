@@ -27,16 +27,17 @@
 #include <Adafruit_HMC5883_U.h>
 #include <SD.h>
 #include <Servo.h>
+
 ///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 String out; 
-const float degtorad = 71 / 4068; //initial pressure and declination, needs adjusting every time starting
-float initp = 1013.25 , declination = 1.0 * degtorad /*default*/,drive, heading, course;
-long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
-unsigned long fix_age;
-bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
-File Log ;
-Servo SL , SR;
+static const float degtorad = 71 / 4068; //initial pressure and declination, needs adjusting every time starting
+static float initp = 1013.25 , declination = 1.0 * degtorad /*default*/,drive, heading, course;
+static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
+static unsigned long fix_age;
+static bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
+static File Log ;
+static Servo SL , SR;
 
 #define GPSIN  8
 #define GPSOUT 7
@@ -49,6 +50,7 @@ SoftwareSerial GPS(GPSIN,GPSOUT); //GPS
 TinyGPS gps;
 Adafruit_BME280 bme; // I2C
 Adafruit_HMC5883_Unified mag;
+
 ///////////////////////////////////////////////////Sends all data every interrupt/////////////////////////////
 //Adds the float as string onto the out string 
 
@@ -56,10 +58,10 @@ void INIT(){
   if(SD.begin(SDSS)){
     File Log = SD.open("log.txt", FILE_WRITE);
     if(Log){
-      out = "START";
+      out = 'S';
       }
     else {
-      out = "SO";
+      out = 'O';
     }
     SL.attach(SRVL);
     SR.attach(SRVR);
@@ -81,7 +83,7 @@ void Tick(){
    if(Log) {
     Log.print(out);
   }
-   out = '\n';
+   out = "\n";
   //Formats all data onto a buffer that is printed in string form in the next line
   //sprintf(outBuffer,"%s ; %s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()),String(drive));
   //Serial.println(String(outBuffer));
@@ -95,14 +97,14 @@ void setup() {
   //Initializes all logging and measurement capabilites
   INIT();
   if (!bme.begin()) {  
-    out = out + "B";
+    out = out + 'B';
     while(1);
   }
   else{
     initp = bme.readPressure();
   }
   if(!mag.begin()){
-    out = out + "M";
+    out = out + 'M';
     while(1);
   }
   
@@ -159,10 +161,10 @@ switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1
           //initp = sIN.subString(2, sIN.indexOf(' ')).toFloat();
           declination = sIN.substring(sIN.indexOf(' ')).toFloat() * degtorad;
           break;
-      case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'ON' , off if anything else, Argument of max 2 chars) 
-          if (sIN.length() > 1)
+      case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'E' , off if anything else, Argument of max 2 chars) 
+          if (sIN.length() > 2)
           {
-            servoEN = sIN.substring(2,4) == "ON";
+            servoEN = sIN.substring(2,4) == 'E';
           } 
           else 
           {
