@@ -27,11 +27,10 @@
 #include <Adafruit_HMC5883_U.h>
 #include <SD.h>
 #include <Servo.h>
-#include <EEPROM>
 ///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 String out; 
-static float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000 , 0.0, 0.0 , 57,29577 };
+static float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 0.0, 0.0 };
 static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 static unsigned long fix_age;
 static bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
@@ -49,12 +48,12 @@ static Servo SL , SR;
 ////////////PACK ARRAY MAPPING\\\\\\\\\\\\\
 //First 5 values are
   
-#define HEADING = 4
-#define DRIVE = 5
-#define COURSE = 6
-#define INITP = 7   
-#define DEC = 8
-#define DEGTOGRAD = 9 
+#define HEADING 4
+#define DRIVE 5
+#define COURSE 6
+#define INITP 7   
+#define DECL 8
+#define DEGTOGRAD 9 
 
 /////////////EEPROM MAPPING\\\\\\\\\\\\\\\\
 //(EEPROM usage is considered and not implemented yet)
@@ -142,7 +141,7 @@ void loop() {
   sensors_event_t event;
   mag.getEvent(&event); 
   //Reads calculates the direction we are heading (in degrees). TODO: Check Sensor orientation and change formula accordingly 
-  pack[HEADING] = (atan2(event.magnetic.y, event.magnetic.x) + pack[DEC])/ pack[10]; 
+  pack[HEADING] = (atan2(event.magnetic.y, event.magnetic.x)/ 57,29577) + pack[DECL]; 
   if(pack[HEADING] < 0){ //Check if the value is negative
     pack[HEADING] += 360;
   } 
@@ -174,7 +173,7 @@ switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1
           Tlon = sIN.substring(sIN.indexOf(' ')).toInt();
           break;
       case char('i'): //Setting initial pressure and declination
-          pack[DEC] = sIN.substring(sIN.indexOf(' ')).toFloat() * pack[10];
+          pack[DECL] = sIN.substring(sIN.indexOf(' ')).toFloat();
           break;
       case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'E' , off if anything else, Argument of max 2 chars) 
           if (sIN.length() > 2)
