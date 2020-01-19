@@ -27,17 +27,17 @@
 #include <Adafruit_HMC5883_U.h>
 #include <SD.h>
 #include <Servo.h>
-
+#include <EEPROM>
 ///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 String out; 
-static const float degtorad = 71 / 4068; //initial pressure and declination, needs adjusting every time starting
-static float initp = 1013.25 , declination = 1.0 * degtorad /*default*/,drive, heading, course;
+static float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000 , 0.0, 0.0 , 57,29577 };
 static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 static unsigned long fix_age;
 static bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 static File Log ;
 static Servo SL , SR;
+//////////////PIN MAPPING\\\\\\\\\\\\\\\\\
 
 #define GPSIN  8
 #define GPSOUT 7
@@ -45,6 +45,19 @@ static Servo SL , SR;
 #define SDSS 13
 #define SRVL 5
 #define SRVR 6
+
+////////////PACK ARRAY MAPPING\\\\\\\\\\\\\
+//First 5 values are
+  
+#define HEADING = 4
+#define DRIVE = 5
+#define COURSE = 6
+#define INITP = 7   
+#define DEC = 8
+#define DEGTOGRAD = 9 
+
+/////////////EEPROM MAPPING\\\\\\\\\\\\\\\\
+//(EEPROM usage is considered and not implemented yet)
 
 SoftwareSerial GPS(GPSIN,GPSOUT); //GPS 
 TinyGPS gps;
@@ -68,18 +81,22 @@ void INIT(){
   }
 }
 
-void Append(float f){
-  out = out + String(f) + ';' ;
-}
-
 void Tick(){
-   Append(bme.readTemperature()); 
-   Append(bme.readPressure()); 
-   Append(bme.readAltitude(initp)); 
-   Append(bme.readHumidity());
-   Append(course);
-   Append(drive);
-   Serial.print(out);
+   
+   pack [0] = bme.readTemperature(); 
+   pack [1] = bme.readPressure(); 
+   pack [2] = bme.readAltitude(pack[INITP]); 
+   pack [3] = bme.readHumidity();
+   out = out + String(lon, HEX);
+   out = out + String(lat, HEX);
+   for(int i = 0; i <= 4; i ++){
+     Serial.print(String(pack[i], 4));
+     if(Log) {
+       Log.print(String(pack[i], 4));
+     }
+   }
+   
+  Serial.print(out);
    if(Log) {
     Log.print(out);
   }
@@ -97,14 +114,12 @@ void setup() {
   //Initializes all logging and measurement capabilites
   INIT();
   if (!bme.begin()) {  
-    out = out + 'B';
     while(1);
   }
   else{
-    initp = bme.readPressure();
+    pack[INITP] = bme.readPressure();
   }
   if(!mag.begin()){
-    out = out + 'M';
     while(1);
   }
   
@@ -126,40 +141,40 @@ void loop() {
   //Makes a sensor event and reads all magnetometer data to it
   sensors_event_t event;
   mag.getEvent(&event); 
-  //Reads calculates the direction we are heading. TODO: Check Sensor orientation and change formula accordingly 
-  heading = (atan2(event.magnetic.y, event.magnetic.x) + declination)/degtorad;
-  if(heading < 0){ //Check if the value is negative
-    heading += 360;
+  //Reads calculates the direction we are heading (in degrees). TODO: Check Sensor orientation and change formula accordingly 
+  pack[HEADING] = (atan2(event.magnetic.y, event.magnetic.x) + pack[DEC])/ pack[10]; 
+  if(pack[HEADING] < 0){ //Check if the value is negative
+    pack[HEADING] += 360;
   } 
-  else if(heading > 360){ // Check for wrap due to addition of declination.
-    heading -= 360;
+  else if(pack[HEADING] > 360){ // Check for wrap due to addition of declination.
+    pack[HEADING] -= 360;
   }
 //////////////////////////////////////Drive Calculation\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\  
-  //Calculate Course to target  N = 0 E = 90 S = 180 W = 270 , Own heading must obey the same rules
-  course = TinyGPS::course_to(lat,lon,Tlat,Tlon);
+  //Calculate Course (pack[5]) to target  N = 0 E = 90 S = 180 W = 270 , Own heading must obey the same rules
+  pack[COURSE] = TinyGPS::course_to(lat,lon,Tlat,Tlon);
   /*Calculating the drive variable in two steps: 
   Step one is to calculate the change in angle needed to make heading equal to the course.
   Step two is to calculate the (propotional) drive by dividing the step one number with the change of angle in degrees that we want the drive to be maximum and clamp the result between the maximal and the minimal drive value
   0-90 is left 90-180 is right
   */
-  drive = (course - heading) / 0.25;
+  pack[DRIVE] = (pack[COURSE] - pack[HEADING]) / 0.25;
   //drive = constrain(drive, -180 ,180);
   //-180 - Fully Winched In, turning ; 0 - Fully Winched Out, no turning.  
-  SL.write( -(constrain(drive, -180 , 0)));
+  SL.write( -(constrain(pack[DRIVE], -180 , 0)));
   //Rotates when SL at 0 an doesnt turn when it is on 0 itself; full whinch at +180  
-  SR.write(constrain(drive, 0, 180));
- ////////////////////////////////Recieving commands from the ground\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  SR.write(constrain(pack[DRIVE], 0, 180));
+ 
+  ////////////////////////////////Recieving commands from the ground\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
   
   if(Serial.available() > 1){
     String sIN = Serial.readString();
 switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1 
       case char('v'): //Setting Victim Coordinates 
-          Tlat = sIN.substring(2, sIN.indexOf(' ')).toFloat();
-          Tlon = sIN.substring(sIN.indexOf(' ')).toFloat();
+          Tlat = sIN.substring(2, sIN.indexOf(' ')).toInt();
+          Tlon = sIN.substring(sIN.indexOf(' ')).toInt();
           break;
       case char('i'): //Setting initial pressure and declination
-          //initp = sIN.subString(2, sIN.indexOf(' ')).toFloat();
-          declination = sIN.substring(sIN.indexOf(' ')).toFloat() * degtorad;
+          pack[DEC] = sIN.substring(sIN.indexOf(' ')).toFloat() * pack[10];
           break;
       case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'E' , off if anything else, Argument of max 2 chars) 
           if (sIN.length() > 2)
