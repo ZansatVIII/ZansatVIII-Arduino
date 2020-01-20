@@ -30,7 +30,7 @@
 ///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 
 String out; 
-static float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 0.0, 0.0 };
+static float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 0.0, 0.0 , 2.0};
 static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 static unsigned long fix_age;
 static bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
@@ -46,14 +46,14 @@ static Servo SL , SR;
 #define SRVR 6
 
 ////////////PACK ARRAY MAPPING\\\\\\\\\\\\\
-//First 5 values are
+//First 5 values are sent, the first 4 are the bme readings
   
 #define HEADING 4
 #define DRIVE 5
 #define COURSE 6
 #define INITP 7   
 #define DECL 8
-#define DEGTOGRAD 9 
+#define HEIGHTCHECK 9 
 
 /////////////EEPROM MAPPING\\\\\\\\\\\\\\\\
 //(EEPROM usage is considered and not implemented yet)
@@ -88,6 +88,7 @@ void Tick(){
    pack [3] = bme.readHumidity();
    out = out + String(lon, HEX);
    out = out + String(lat, HEX);
+   if (servoEN) tone(2,1500,500);
    for(int i = 0; i <= 4; i ++){
      Serial.print(String(pack[i], 4));
      if(Log) {
@@ -109,7 +110,8 @@ void Tick(){
 void setup() {
   GPS.begin(9600);
   Serial.begin(9600);
-  pinMode(2,INPUT);
+  pinMode(3,INPUT);
+  pinMode(2,OUTPUT);
   //Initializes all logging and measurement capabilites
   INIT();
   if (!bme.begin()) {  
@@ -128,6 +130,16 @@ void setup() {
 
 void loop() {
   ///////////////////////////BEGIN OF LOOP | Orientation data gathering \\\\\\\\\\\\\\\\\\\\\\\
+  /* FALLING CHECK // if heightcheck > 1  Or if the change in height is negative*/
+  if (!pack[HEIGHTCHECK] || !(pack[HEIGHTCHECK] - pack[HEIGHT])) && !buzz
+  {
+   if (pack[HEIGHTCHECK]) pack[HEIGHTCHECK] = -1.0;
+   servoEN = true;
+  }
+  else pack[HEIGHTCHECK] = pack[HEIGHT]; servoEN = false;
+  
+  
+  
   //Gets Longtitude And Lattitude from the gps
   while (GPS.available())
   {
