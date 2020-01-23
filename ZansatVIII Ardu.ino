@@ -172,7 +172,7 @@ void loop() {
   SR.write(constrain(pack[DRIVE], 0, 180));
  
   /*///////////////////////////////Recieving commands from the ground\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
-  
+  /*
   if(Serial.available() > 1){
     String sIN = Serial.readString();
 switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1 
@@ -198,4 +198,5 @@ switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1
           
     }
   }
+  */
 }
