@@ -24,10 +24,10 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
 #include <TinyGPS.h>  
-#include <Adafruit_HMC5883_U.h>
+#include <QMC5883LCompass.h>
 #include <SD.h>
 #include <Servo.h>
-///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/*///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 String out; 
 static float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 0.0, 0.0 , 2.0};
@@ -36,7 +36,7 @@ static unsigned long fix_age;
 static bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 static File Log ;
 static Servo SL , SR;
-//////////////PIN MAPPING\\\\\\\\\\\\\\\\\
+/*/////////////PIN MAPPING\\\\\\\\\\\\\\\\\*/
 
 #define GPSIN  8
 #define GPSOUT 7
@@ -45,8 +45,8 @@ static Servo SL , SR;
 #define SRVL 5
 #define SRVR 6
 
-////////////PACK ARRAY MAPPING\\\\\\\\\\\\\
-//First 5 values are sent, the first 4 are the bme readings
+/*///////////PACK ARRAY MAPPING\\\\\\\\\\\\\
+//First 5 values are sent, the first 4 are the bme readings */
 
 #define TEMPS 0
 #define PRESS 1
@@ -59,16 +59,16 @@ static Servo SL , SR;
 #define DECL 8
 #define HEIGHTCHECK 9 
 
-/////////////EEPROM MAPPING\\\\\\\\\\\\\\\\
-//(EEPROM usage is considered and not implemented yet)
+/*////////////EEPROM MAPPING\\\\\\\\\\\\\\\\
+//(EEPROM usage is considered and not implemented yet) */
 
 SoftwareSerial GPS(GPSIN,GPSOUT); //GPS 
 TinyGPS gps;
 Adafruit_BME280 bme; // I2C
-Adafruit_HMC5883_Unified mag;
+QMC5883LCompass mag;
 
-///////////////////////////////////////////////////Sends all data every interrupt/////////////////////////////
-//Adds the float as string onto the out string 
+/*//////////////////////////////////////////////////Sends all data every interrupt/////////////////////////////
+//Adds the float as string onto the out string */
 
 void INIT(){ 
   if(SD.begin(SDSS)){
@@ -105,11 +105,8 @@ void Tick(){
     Log.print(out);
   }
    out = "\n";
-  //Formats all data onto a buffer that is printed in string form in the next line
-  //sprintf(outBuffer,"%s ; %s ; %s ; %s ; %s ",String(bme.readTemperature()),String(bme.readPressure()),String(bme.readAltitude(1013.25)),String(bme.readHumidity()),String(drive));
-  //Serial.println(String(outBuffer));
 }
-////////////////////////////////////////////Hardware and Library initialization\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+/*///////////////////////////////////////////Hardware and Library initialization\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 void setup() {
   GPS.begin(9600);
@@ -124,9 +121,7 @@ void setup() {
   else{
     pack[INITP] = bme.readPressure();
   }
-  if(!mag.begin()){
-    while(1);
-  }
+  mag.init();
   
   //Attaches interrupt to the pin recieving the pps signal
   attachInterrupt(digitalPinToInterrupt(GPSPPS), Tick , RISING);
@@ -153,11 +148,8 @@ void loop() {
       
     }
   }
-  //Makes a sensor event and reads all magnetometer data to it
-  sensors_event_t event;
-  mag.getEvent(&event); 
   //Reads calculates the direction we are heading (in degrees). TODO: Check Sensor orientation and change formula accordingly 
-  pack[HEADING] = (atan2(event.magnetic.y, event.magnetic.x)/ 57,29577) + pack[DECL]; 
+  pack[HEADING] = (atan2(mag.getY(), mag.getX())/ 57,29577) + pack[DECL]; 
   if(pack[HEADING] < 0){ //Check if the value is negative
     pack[HEADING] += 360;
   } 
@@ -179,7 +171,7 @@ void loop() {
   //Rotates when SL at 0 an doesnt turn when it is on 0 itself; full whinch at +180  
   SR.write(constrain(pack[DRIVE], 0, 180));
  
-  ////////////////////////////////Recieving commands from the ground\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+  /*///////////////////////////////Recieving commands from the ground\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
   
   if(Serial.available() > 1){
     String sIN = Serial.readString();
