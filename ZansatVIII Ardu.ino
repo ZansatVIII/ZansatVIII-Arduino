@@ -47,7 +47,11 @@ static Servo SL , SR;
 
 ////////////PACK ARRAY MAPPING\\\\\\\\\\\\\
 //First 5 values are sent, the first 4 are the bme readings
-  
+
+#define TEMPS 0
+#define PRESS 1
+#define HEIGHT 2
+#define HUMIDITY 3
 #define HEADING 4
 #define DRIVE 5
 #define COURSE 6
@@ -82,10 +86,10 @@ void INIT(){
 
 void Tick(){
    
-   pack [0] = bme.readTemperature(); 
-   pack [1] = bme.readPressure(); 
-   pack [2] = bme.readAltitude(pack[INITP]); 
-   pack [3] = bme.readHumidity();
+   pack [TEMPS] = bme.readTemperature(); 
+   pack [PRESS] = bme.readPressure(); 
+   pack [HEIGHT] = bme.readAltitude(pack[INITP]); 
+   pack [HUMIDITY] = bme.readHumidity();
    out = out + String(lon, HEX);
    out = out + String(lat, HEX);
    if (servoEN) tone(2,1500,500);
@@ -131,7 +135,7 @@ void setup() {
 void loop() {
   ///////////////////////////BEGIN OF LOOP | Orientation data gathering \\\\\\\\\\\\\\\\\\\\\\\
   /* FALLING CHECK // if heightcheck > 1  Or if the change in height is negative*/
-  if (!pack[HEIGHTCHECK] || !(pack[HEIGHTCHECK] - pack[HEIGHT])) && !buzz
+  if (!pack[HEIGHTCHECK] || -1*(pack[HEIGHTCHECK] - pack[HEIGHT]))
   {
    if (pack[HEIGHTCHECK]) pack[HEIGHTCHECK] = -1.0;
    servoEN = true;
