@@ -21,16 +21,15 @@
 #include <SoftwareSerial.h>
 #include <Wire.h>
 #include <SPI.h>
-#include <Adafruit_Sensor.h>
-#include <Adafruit_BME280.h>
 #include <TinyGPS.h>  
 #include <QMC5883LCompass.h>
 #include <SD.h>
 #include <Servo.h>
+#include <Chiptemp.h>
 /*///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
 String out; 
-static float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 0.0, 0.0 , 2.0};
+static float pack [8] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 1.0 , 2.0};
 static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 static unsigned long fix_age;
 static bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
@@ -49,22 +48,19 @@ static Servo SL , SR;
 //First 5 values are sent, the first 4 are the bme readings */
 
 #define TEMPS 0
-#define PRESS 1
-#define HEIGHT 2
-#define HUMIDITY 3
-#define HEADING 4
-#define DRIVE 5
-#define COURSE 6
-#define INITP 7   
-#define DECL 8
-#define HEIGHTCHECK 9 
+#define HEIGHT 1
+#define HEADING 2
+#define DRIVE 3
+#define COURSE 4
+#define INITP 5 
+#define DECL 6
+#define HEIGHTCHECK 7 
 
 /*////////////EEPROM MAPPING\\\\\\\\\\\\\\\\
 //(EEPROM usage is considered and not implemented yet) */
 
 SoftwareSerial GPS(GPSIN,GPSOUT); //GPS 
 TinyGPS gps;
-Adafruit_BME280 bme; // I2C
 QMC5883LCompass mag;
 
 /*//////////////////////////////////////////////////Sends all data every interrupt/////////////////////////////
@@ -85,13 +81,9 @@ void INIT(){
 }
 
 void Tick(){
-   
-   pack [TEMPS] = bme.readTemperature(); 
-   pack [PRESS] = bme.readPressure(); 
-   pack [HEIGHT] = bme.readAltitude(pack[INITP]); 
-   pack [HUMIDITY] = bme.readHumidity();
-   out = out + String(lon, HEX);
-   out = out + String(lat, HEX);
+   pack [TEMPS] = Chiptemp::GetRead();
+   out = out + String(lon);
+   out = out + String(lat);
    if (servoEN) tone(2,1500,500);
    for(int i = 0; i <= 4; i ++){
      Serial.print(String(pack[i], 4));
@@ -115,11 +107,6 @@ void setup() {
   pinMode(2,OUTPUT);
   //Initializes all logging and measurement capabilites
   INIT();
-  if (!bme.begin()) {  
-    while(1);
-  }
-  else{
-    pack[INITP] = bme.readPressure();
   }
   mag.init();
   
@@ -144,7 +131,8 @@ void loop() {
   {
     if (gps.encode(GPS.read()))
     {
-    gps.get_position(&lat, &lon, &fix_age);
+    gps.get_position(&lat, &lon,&fix_age);
+    pack[HEIGHT] = gps.f_altitude();
       
     }
   }
