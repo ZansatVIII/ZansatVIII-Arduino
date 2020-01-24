@@ -7,17 +7,22 @@
 #ifndef Chiptemp_h
 #define Chiptemp_h
 
+#include <WProgram.h>
+
 // library interface description
 class Chiptemp
 {
   // user-accessible "public" interface
   public:
-    Chiptemp(int);
-    void GetRead(void);
+    //Constructor , requires sample size
+    Chiptemp(int s);
+    //Temperature returning function
+    float GetRead(void);
 
   // library-accessible "private" interface
   private:
-    void Sample(void);
+    int samplesize;
+    int Sample(void);
 };
 
 #endif
