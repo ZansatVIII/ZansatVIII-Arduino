@@ -3,7 +3,6 @@
 
 //INIT 
 void Chiptemp:Chiptemp(int s){
-  
   Chiptemp::samplesize = s
  
   //Copied Code
@@ -25,6 +24,10 @@ int Chiptemp::Sample()
 float Chiptemp::GetRead(){
   //one reading discarded, safety feature 
   Chiptemp::Sample();
-  for (int i = 1; i < 1000; i++) // start at 1 so we dont divide by 0
+  float current ;
+  //copied code
+  for (int i = 1; i < Chiptemp::samplesize; i++) // start at 1 so we dont divide by 0
     current += ((Chiptemp::Sample() - current)/(float)i);
+  
+  return current;
 }
