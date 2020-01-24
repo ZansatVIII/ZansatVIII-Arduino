@@ -3,7 +3,7 @@
 
 //INIT 
 void Chiptemp:Chiptemp(int s){
-  Chiptemp::samplesize = s
+  samplesize = s
  
   //Copied Code
   ADCSRA |= _BV(ADSC); // start the conversion
@@ -23,11 +23,11 @@ int Chiptemp::Sample()
 //Average the temperatures 
 float Chiptemp::GetRead(){
   //one reading discarded, safety feature 
-  Chiptemp::Sample();
+  Sample();
   float current ;
   //copied code
-  for (int i = 1; i < Chiptemp::samplesize; i++) // start at 1 so we dont divide by 0
-    current += ((Chiptemp::Sample() - current)/(float)i);
+  for (int i = 1; i < samplesize; i++) // start at 1 so we dont divide by 0
+    current += ((Sample() - current)/(float)i);
   
   return current;
 }
