@@ -16,7 +16,7 @@ jobs:
       # Directory in which to search for sketches
         sketchDirectory: / # optional, default is examples
       # Fully Qualified Board Name
-        board: 'avr:promini'
+        board: "arduino:avr:pro_mini"
       
     - name: Setup Arduino CLI
       uses: arduino/setup-arduino-cli@v1.0.0
