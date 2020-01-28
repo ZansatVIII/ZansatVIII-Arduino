@@ -16,7 +16,7 @@ jobs:
       # Directory in which to search for sketches
         sketchDirectory: / # optional, default is examples
       # Fully Qualified Board Name
-        board: "arduino:avr:pro_mini"
+        board: "arduino:avr:pro:cpu=8MHzatmega328"
       
     - name: Setup Arduino CLI
       uses: arduino/setup-arduino-cli@v1.0.0
