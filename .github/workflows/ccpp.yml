@@ -12,9 +12,9 @@ jobs:
       uses: Legion2/arduino-builder-action@v2.0.0
       with:
       # Path to a single sketch
-        sketch: ZansatVIII Ardu # optional
+      #sketch: /github/workspace/ZansatVIII Ardu # optional
       # Directory in which to search for sketches
-        sketchDirectory: / # optional, default is examples
+        sketchDirectory: /github/workspace/ # optional, default is examples
       # Fully Qualified Board Name
         board: "arduino:avr:pro:cpu=8MHzatmega328"
       
