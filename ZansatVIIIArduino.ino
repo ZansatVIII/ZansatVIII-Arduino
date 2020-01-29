@@ -94,9 +94,9 @@ void Tick(){
    out = out + String(lat, HEX);
    if (servoEN) tone(2,1500,500);
    for(int i = 0; i <= 4; i ++){
-     Serial.print(String(pack[i], 4));
+     Serial.print(pack[i], 5);
      if(Log) {
-       Log.print(String(pack[i], 4));
+       Log.print(pack[i], 5);
      }
    }
    
@@ -149,7 +149,9 @@ void loop() {
     }
   }
   //Reads calculates the direction we are heading (in degrees). TODO: Check Sensor orientation and change formula accordingly 
-  pack[HEADING] = (atan2(mag.getY(), mag.getX())/ 57,29577) + pack[DECL]; 
+  mag.read();
+  pack[HEADING] = mag.getAzimuth() + pack[DECL];
+  //pack[HEADING] = (atan2(mag.getY(), mag.getX())/ 57,29577) + pack[DECL]; //The old way using the raw data, may need to be recosidered depending on sensor orientation
   if(pack[HEADING] < 0){ //Check if the value is negative
     pack[HEADING] += 360;
   } 
@@ -172,31 +174,32 @@ void loop() {
   SR.write(constrain(pack[DRIVE], 0, 180));
  
   /*///////////////////////////////Recieving commands from the ground\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
-  /*
+  
   if(Serial.available() > 1){
     String sIN = Serial.readString();
-switch(sIN.charAt(0)){ //Commands: C ARG1 ARG2 ARG3 Example: s 1 
-      case char('v'): //Setting Victim Coordinates 
-          Tlat = sIN.substring(2, sIN.indexOf(' ')).toInt();
-          Tlon = sIN.substring(sIN.indexOf(' ')).toInt();
-          break;
-      case char('i'): //Setting initial pressure and declination
-          pack[DECL] = sIN.substring(sIN.indexOf(' ')).toFloat();
-          break;
-      case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'E' , off if anything else, Argument of max 2 chars) 
-          if (sIN.length() > 2)
-          {
-            servoEN = sIN.substring(2,4) == 'E';
-          } 
-          else 
-          {
-            servoEN = !servoEN;
-          }
-          break;
+  switch(sIN[0]){ //Commands: C ARG1,ARG2;ARG3 Example: s 1 
+    case char('v'): //Setting Victim Coordinates 
+      int spac = sIN.indexOf(',');
+      Tlat = sIN.substring(2, spac).toInt();
+      Tlon = sIN.substring(spac).toInt();
+      break;
+    case char('p'): //Setting initial pressure and declination
+      pack[sIN[3]] = sIN.substring(4).toFloat();
+      break;
+   
+    case char('s'): //Enabling / Disabling servos (switch if not argumented , on if arg is 'E' , off if anything else, Argument of max 2 chars) 
+      if (sIN.length() > 2)
+      {
+       servoEN = sIN.substring(2,4) == 'E';
+      } 
+      else 
+      {
+        servoEN = !servoEN;
+      }
+      break;
         
           
           
     }
   }
-  */
 }
