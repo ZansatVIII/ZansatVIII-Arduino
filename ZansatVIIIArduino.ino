@@ -1,3 +1,4 @@
+
 /*
   //////////////////////////////////////////////////////////Info\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
                                        Zansat VIII cansat microcontroller code
@@ -7,7 +8,8 @@
                         !! Disclaimer: This code is designed for a specific board and components,
                         different hardware configurations may not result in optimal performance. !!
 
-              This version is not fully optimized and cirquumvents the gps chip, that is out of order in our setup.
+              This version is not fully tested nor optimized, take this into account when using the code in any way:
+                                        The only test made is compiling this code
 
                                           The code is licensed under GGPL v3.0:
                                (TL;DR : Plagiarizing this is fine as long as you admit to it)
@@ -31,7 +33,7 @@ float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 1013.25, 2.0 , 0
 long prevtick;
 //static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 //static unsigned long fix_age;   GPS
-bool servoEN = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
+bool servoEN = false, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 File Log ;
 static Servo SL , SR;
 /*/////////////PIN MAPPING\\\\\\\\\\\\\\\\\*/
@@ -89,12 +91,10 @@ void Tick() {
   if (((pack[HEIGHTCHECK] + 9.0) - pack[HEIGHT] ) < 0)
   {
     servoEN = true;
-    Serial.print(F("FALL"));
     pack[HEIGHTCHECK] = pack[HEIGHT];
     
   }
   else{
-    Serial.print(F("NOFALL"));
     pack[HEIGHTCHECK] = pack[HEIGHT];
     servoEN = false;
   }
@@ -105,7 +105,8 @@ void Tick() {
   pack [HUMIDITY] = bme.readHumidity();
   //out = out + String(lon, HEX);  //NOGPS
   //out = out + String(lat, HEX);
-  if (servoEN) {
+  Bell = Auth && servoEN;
+  if (Bell || servoEN) {
     noTone(2);
     tone(2, 1500, 500);
   }
@@ -131,7 +132,7 @@ void Tick() {
 void setup() {
   //GPS.begin(9600); NOGPS
   Serial.begin(9600);
-  Serial.println(F("SERIAL INIT"));
+  Serial.println(F("I"));
   pinMode(3, INPUT);
   pinMode(2, OUTPUT);
   //Initializes all logging and measurement capabilites
@@ -227,6 +228,9 @@ void loop() {
           servoEN = !servoEN;
         }
         break;
+      case char('a'):
+        Auth = true;
+        break; 
     }
     Serial.println("COMMAND");
   }
