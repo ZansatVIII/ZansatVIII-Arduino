@@ -31,18 +31,19 @@
 
 String out;
 float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 1013.25, 2.0 , 0.0};
-long prevtick;
+long prevtick, detachtimer;
 //static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 //static unsigned long fix_age;   GPS
-bool servoEN = false, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
+bool servoEN = True, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 // File Log ;
-Servo SL , SR;
+Servo SL , SR, BU;
 /*/////////////PIN MAPPING\\\\\\\\\\\\\\\\\*/
 
 //#define GPSIN  8  //NOGPS
 //#define GPSOUT 7
 //#define GPSPPS 3
 #define SDSS 13
+#define BUZZ 2
 #define SRVL 5
 #define SRVR 6
 
@@ -83,6 +84,11 @@ void INIT() {
   }
 }
 */
+void Noise(){
+  BU.Attach(BUZZ);
+  Bu.Write(180)
+  detachtimer = millis()+500
+}
 void Tick() {
   /* FALLING CHECK // if heightcheck > 1  Or if the change in height is  more negative than -9m/s */
   if (((pack[HEIGHTCHECK] + 9.0) - pack[HEIGHT] ) < 0)
@@ -104,8 +110,7 @@ void Tick() {
   //out = out + String(lat, HEX);
   Bell = Auth && servoEN;
   if (Bell || servoEN) {
-    noTone(2);
-    tone(2, 1500, 500);
+    Noise();
   }
   for (int i = 0; i <= 6; i ++) {
     Serial.print(pack[i], 4);
@@ -132,7 +137,7 @@ void setup() {
   Serial.println(F("I"));
   pinMode(3, INPUT);
   pinMode(2, OUTPUT);
-  tone(2,1500,500);
+  Noise();
   //Initializes all logging and measurement capabilites
   //INIT(); NOSD 
   if (!bme.begin(0x76)) {
@@ -196,7 +201,7 @@ void loop() {
   //Rotates when SL at 0 an doesnt turn when it is on 0 itself; full whinch at +180
   calc =  constrain(pack[DRIVE], 0.0F, 180.0F);
   SR.write(calc);
-
+  if (millis() > detachtimer) Bu.detach();
   if (millis() - prevtick >= 1000) {
     Tick();
     prevtick = millis();
