@@ -1,4 +1,5 @@
 
+
 /*
   //////////////////////////////////////////////////////////Info\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
                                        Zansat VIII cansat microcontroller code
@@ -35,7 +36,7 @@ long prevtick;
 //static unsigned long fix_age;   GPS
 bool servoEN = false, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 File Log ;
-static Servo SL , SR;
+Servo SL , SR;
 /*/////////////PIN MAPPING\\\\\\\\\\\\\\\\\*/
 
 //#define GPSIN  8  //NOGPS
@@ -79,10 +80,6 @@ void INIT() {
     else {
       out = 'O';
     }
-    pinMode(SRVL, OUTPUT);
-    pinMode(SRVL, OUTPUT);
-    SL.attach(SRVL);
-    SR.attach(SRVR);
   }
 }
 
@@ -106,10 +103,10 @@ void Tick() {
   //out = out + String(lon, HEX);  //NOGPS
   //out = out + String(lat, HEX);
   Bell = Auth && servoEN;
-  if (Bell || servoEN) {
+  /* if (Bell || servoEN) {
     noTone(2);
     tone(2, 1500, 500);
-  }
+  } */
   for (int i = 0; i <= 6; i ++) {
     Serial.print(pack[i], 4);
     Serial.print(";");
@@ -141,8 +138,12 @@ void setup() {
     Serial.println(F("NOBMP"));
   }
   else {
-    pack[INITP] = bme.readPressure() / 100.0F + 2.0F;
+    pack[INITP] = bme.readPressure() / 100.0F + 1.0F;
   }
+  pinMode(SRVL, OUTPUT);
+  pinMode(SRVL, OUTPUT);
+  SL.attach(SRVL);
+  SR.attach(SRVR);
   mag.init();
 
   //Attaches interrupt to the pin recieving the pps signal
@@ -154,6 +155,7 @@ float wrapcheck(float f) {
   else if (f > 360) return f -= 360.0; // Check for wrap due to addition of declination.
   else return f;
 }
+
 void loop() {
   //Serial.println(F("LOOP"));
   ///////////////////////////BEGIN OF LOOP | Orientation data gathering \\\\\\\\\\\\\\\\\\\\\\\
@@ -184,12 +186,15 @@ void loop() {
     Step two is to calculate the (propotional) drive by dividing the step one number with the change of angle in degrees that we want the drive to be maximum and clamp the result between the maximal and the minimal drive value
     -180-0  is left 0 - 180 is right
   */
-  pack[DRIVE] = (wrapcheck(pack[COURSE] - pack[HEADING]) - 180.0F) * 4.0F ;
+  pack[DRIVE] = wrapcheck(pack[COURSE] - pack[HEADING]); 
+  pack[DRIVE] = (pack[DRIVE] - 180.0F) * 2.0F;
   pack[DRIVE] = constrain(pack[DRIVE], -180.0F , 180.0F);
   //-180 - Fully Winched In, turning ; 0 - Fully Winched Out, no turning.
-  SL.write( -1.0F * (constrain(pack[DRIVE], -180.0F , 0.0F)));
+  float calc = constrain(pack[DRIVE], -180.0F , 0.0F);
+  SL.write(calc * -1.0F );
   //Rotates when SL at 0 an doesnt turn when it is on 0 itself; full whinch at +180
-  SR.write(constrain(pack[DRIVE], 0.0F, 180.0F));
+  calc =  constrain(pack[DRIVE], 0.0F, 180.0F);
+  SR.write(calc);
 
   if (millis() - prevtick >= 1000) {
     Tick();
