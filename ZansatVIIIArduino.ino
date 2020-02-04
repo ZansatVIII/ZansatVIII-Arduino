@@ -20,12 +20,12 @@
 */
 #include <SoftwareSerial.h>
 #include <Wire.h>
-#include <SPI.h>
+//#include <SPI.h> NOSD
 #include <Adafruit_Sensor.h>
 #include <Adafruit_BME280.h>
-//#include <TinyGPS.h>
+//#include <TinyGPS.h> NOGPS 
 #include <QMC5883LCompass.h>
-#include <SD.h>
+//#include <SD.h> NOSD 
 #include <Servo.h>
 /*///////////////////////////////////////////////////////Defines and vars\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
 
@@ -35,7 +35,7 @@ long prevtick;
 //static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 //static unsigned long fix_age;   GPS
 bool servoEN = false, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
-File Log ;
+// File Log ;
 Servo SL , SR;
 /*/////////////PIN MAPPING\\\\\\\\\\\\\\\\\*/
 
@@ -70,7 +70,7 @@ QMC5883LCompass mag;
 
 /*//////////////////////////////////////////////////Sends all data every interrupt/////////////////////////////
   //Adds the float as string onto the out string */
-
+/* NOSD 
 void INIT() {
   if (SD.begin(SDSS)) {
     File Log = SD.open("log.txt", FILE_WRITE);
@@ -82,7 +82,7 @@ void INIT() {
     }
   }
 }
-
+*/
 void Tick() {
   /* FALLING CHECK // if heightcheck > 1  Or if the change in height is  more negative than -9m/s */
   if (((pack[HEIGHTCHECK] + 9.0) - pack[HEIGHT] ) < 0)
@@ -111,17 +111,17 @@ void Tick() {
     Serial.print(pack[i], 4);
     Serial.print(";");
 
-    if (Log) {
+   /* if (Log) { NOSD 
       Log.print(pack[i], 4);
       Log.print(";");
-    }
+    }*/
   }
   Serial.print(servoEN);
   
   Serial.print(out);
-  if (Log) {
+  /*if (Log) { NOSD 
     Log.print(out);
-  }
+  }*/
   out = "\n";
 }
 /*///////////////////////////////////////////Hardware and Library initialization\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\*/
@@ -132,8 +132,9 @@ void setup() {
   Serial.println(F("I"));
   pinMode(3, INPUT);
   pinMode(2, OUTPUT);
+  tone(2,1500,500);
   //Initializes all logging and measurement capabilites
-  INIT();
+  //INIT(); NOSD 
   if (!bme.begin(0x76)) {
     Serial.println(F("NOBMP"));
   }
