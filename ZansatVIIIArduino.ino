@@ -30,7 +30,11 @@ long prevtick, detachtimer;
 //static unsigned long fix_age;   GPS
 bool servoEN = true, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 // File Log ;
-Servo SL , SR, BU;
+Servo SL , SR;
+//Macro's 
+
+#define TOG(x,y) (x^=(1<<y)) 
+
 /*/////////////PIN MAPPING\\\\\\\\\\\\\\\\\*/
 
 //#define GPSIN  8  //NOGPS
@@ -79,9 +83,11 @@ void INIT() {
 }
 */
 void Noise(){
-  BU.attach(BUZZ);
-  BU.write(180);
-  detachtimer = millis()+500;
+  long i = millis()+300;
+  while(i > millis()){
+    TOG(PORTB,BUZZ);
+    delayMicroseconds(200);
+  }
 }
 void Tick() {
   /* FALLING CHECK // if heightcheck > 1  Or if the change in height is  more negative than -9m/s */
@@ -193,7 +199,6 @@ void loop() {
   //Rotates when SL at 0 an doesnt turn when it is on 0 itself; full whinch at +180
   calc =  constrain(pack[DRIVE], 0.0F, 180.0F);
   SR.write(calc);
-  if (millis() > detachtimer) BU.detach();
   if (millis() - prevtick >= 1000) {
     Tick();
     prevtick = millis();
