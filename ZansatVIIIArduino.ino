@@ -103,10 +103,10 @@ void Tick() {
   //out = out + String(lon, HEX);  //NOGPS
   //out = out + String(lat, HEX);
   Bell = Auth && servoEN;
-  /* if (Bell || servoEN) {
+  if (Bell || servoEN) {
     noTone(2);
     tone(2, 1500, 500);
-  } */
+  }
   for (int i = 0; i <= 6; i ++) {
     Serial.print(pack[i], 4);
     Serial.print(";");
