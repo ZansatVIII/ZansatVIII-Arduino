@@ -1,20 +1,14 @@
-
-
 /*
   //////////////////////////////////////////////////////////Info\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
                                        Zansat VIII cansat microcontroller code
                               Github Source: https://github.com/ZansatVIII/ZansatVIII-Arduino/
                           Author: Jakub Stachurski, Lead programmer @ the Zansat VIII Cansat Team
-
                         !! Disclaimer: This code is designed for a specific board and components,
                         different hardware configurations may not result in optimal performance. !!
-
               This version is not fully tested nor optimized, take this into account when using the code in any way:
                                         The only test made is compiling this code
-
                                           The code is licensed under GGPL v3.0:
                                (TL;DR : Plagiarizing this is fine as long as you admit to it)
-
                                         ... An output parsing tool coming soon ...
   ///////////////////////////////////////////////////////////Libs\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
 */
@@ -34,7 +28,7 @@ float pack [10] = {0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 0.0 , 1000.0 , 1013.25, 2.0 , 0
 long prevtick, detachtimer;
 //static long lon , lat , Tlon, Tlat; //longtitude , lattitude , Target longtitude , Target lattitude
 //static unsigned long fix_age;   GPS
-bool servoEN = True, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
+bool servoEN = true, Auth = false, Bell = false; //Servo motors responsible for guidance are disabled at the start and can be enabled by command
 // File Log ;
 Servo SL , SR, BU;
 /*/////////////PIN MAPPING\\\\\\\\\\\\\\\\\*/
@@ -85,9 +79,9 @@ void INIT() {
 }
 */
 void Noise(){
-  BU.Attach(BUZZ);
-  Bu.Write(180)
-  detachtimer = millis()+500
+  BU.attach(BUZZ);
+  BU.write(180);
+  detachtimer = millis()+500;
 }
 void Tick() {
   /* FALLING CHECK // if heightcheck > 1  Or if the change in height is  more negative than -9m/s */
@@ -167,14 +161,12 @@ void loop() {
   ///////////////////////////BEGIN OF LOOP | Orientation data gathering \\\\\\\\\\\\\\\\\\\\\\\
 
 
-
   //Gets Longtitude And Lattitude from the gps
   /*while (GPS.available())   //NOGPS
     {
     if (gps.encode(GPS.read()))
     {
     gps.get_position(&lat, &lon, &fix_age);
-
     }
     }
   */
@@ -201,7 +193,7 @@ void loop() {
   //Rotates when SL at 0 an doesnt turn when it is on 0 itself; full whinch at +180
   calc =  constrain(pack[DRIVE], 0.0F, 180.0F);
   SR.write(calc);
-  if (millis() > detachtimer) Bu.detach();
+  if (millis() > detachtimer) BU.detach();
   if (millis() - prevtick >= 1000) {
     Tick();
     prevtick = millis();
