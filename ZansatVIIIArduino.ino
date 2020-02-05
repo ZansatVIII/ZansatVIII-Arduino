@@ -85,7 +85,9 @@ void INIT() {
 void Noise(){
   long i = millis()+300;
   while(i > millis()){
-    TOG(PORTB,BUZZ);
+    digitalWrite(BUZZ,HIGH);
+    delayMicroseconds(200);
+    digitalWrite(BUZZ,LOW);
     delayMicroseconds(200);
   }
 }
